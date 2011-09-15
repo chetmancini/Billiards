@@ -1,0 +1,47 @@
+!!ARBvp1.0
+
+ATTRIB ipos   = vertex.position;
+ATTRIB icol   = vertex.color;
+ATTRIB imag   = vertex.attrib[6];
+
+PARAM  const  = { 0.01, -0.2, 10.0, 0.7525749 };
+PARAM  view   = program.env[0];
+PARAM  mult   = program.env[1];
+PARAM  mvp[4] = { state.matrix.mvp };
+
+TEMP   dist;
+TEMP   amag;
+TEMP   luma;
+TEMP   temp;
+
+OUTPUT osiz   = result.pointsize;
+OUTPUT opos   = result.position;
+OUTPUT ocol   = result.color;
+
+# Transform the star position.
+
+DP4    opos.x, mvp[0], ipos;
+DP4    opos.y, mvp[1], ipos;
+DP4    opos.z, mvp[2], ipos;
+DP4    opos.w, mvp[3], ipos;
+
+# Compute the distance (squared) from the viewpoint to the star.
+
+SUB    temp, ipos, view;
+DP3    dist, temp, temp;
+
+# Compute the apparent magnitude.
+
+MUL    temp, dist, const.x;
+LG2    temp, temp.x;
+MUL    temp, temp, const.w;
+ADD    amag, imag, temp;
+
+# Compute the luminosity and sprite scale.
+
+MUL    temp, amag, const.y;
+POW    luma, const.z, temp.x;
+MUL    osiz, luma, mult;
+
+MOV    ocol, icol;
+END
